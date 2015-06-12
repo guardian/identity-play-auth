@@ -24,7 +24,8 @@ libraryDependencies ++= Seq(
   play,
   nscalaTime,
   identityCookie,
-  identityTestUsers
+  identityTestUsers,
+  scalaTestPlus % Test
 )
 
 lazy val root = project in file(".")
