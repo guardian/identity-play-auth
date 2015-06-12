@@ -8,7 +8,7 @@ trait AuthenticationService {
 
   val identityKeys: IdentityKeys
 
-  val cookieDecoder = new IdentityCookieDecoder(identityKeys)
+  lazy val cookieDecoder = new IdentityCookieDecoder(identityKeys)
 
   def authenticatedUserFor[A](request: RequestHeader): Option[IdMinimalUser] = for {
     scGuU <- request.cookies.get("SC_GU_U")
