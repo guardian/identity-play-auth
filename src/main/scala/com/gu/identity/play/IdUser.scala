@@ -4,9 +4,9 @@ import play.api.libs.json.Json
 
 
 case class IdUser(id: String,
-                  primaryEmailAddress: String,
+                  primaryEmailAddress: Option[String],
                   publicFields: PublicFields,
-                  privateFields: PrivateFields,
+                  privateFields: Option[PrivateFields],
                   statusFields: Option[StatusFields])
 
 
