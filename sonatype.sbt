@@ -1,3 +1,5 @@
+sonatypeProfileName := "com.gu"
+
 pomExtra := (
   <url>https://github.com/guardian/identity-auth</url>
     <developers>
