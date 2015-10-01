@@ -42,7 +42,7 @@ class CookieBuilderTest extends FreeSpec {
 
       val domain = Some("domain")
       val idCookies = CookieBuilder.fromGuestConversion(json, domain)
-      val Some(Seq(guuCookie, scguuCookie, scgulaCookie)) = idCookies
+      val Some(Seq(guuCookie, scgulaCookie, scguuCookie)) = idCookies
 
       assert(guuCookie.name === "GU_U")
       assert(guuCookie.value === "gu_u_value")
@@ -51,19 +51,19 @@ class CookieBuilderTest extends FreeSpec {
       assert(!guuCookie.httpOnly)
       assert(guuCookie.domain === domain)
 
-      assert(scguuCookie.name === "SC_GU_U")
-      assert(scguuCookie.value === "sc_gu_u_value")
-      assert(scguuCookie.maxAge.get === (90 * 24 * 60 * 60) +- 5)
-      assert(scguuCookie.secure)
-      assert(scguuCookie.httpOnly)
-      assert(scguuCookie.domain === domain)
-
       assert(scgulaCookie.name === "SC_GU_LA")
       assert(scgulaCookie.value === "sc_gu_la_value")
       assert(scgulaCookie.maxAge === None)
       assert(scgulaCookie.secure)
       assert(scgulaCookie.httpOnly)
       assert(scgulaCookie.domain === domain)
+
+      assert(scguuCookie.name === "SC_GU_U")
+      assert(scguuCookie.value === "sc_gu_u_value")
+      assert(scguuCookie.maxAge.get === (90 * 24 * 60 * 60) +- 5)
+      assert(scguuCookie.secure)
+      assert(scguuCookie.httpOnly)
+      assert(scguuCookie.domain === domain)
     }
   }
 }
