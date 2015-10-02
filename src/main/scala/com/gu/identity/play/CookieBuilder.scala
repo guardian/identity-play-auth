@@ -1,14 +1,12 @@
 package com.gu.identity.play
-import org.joda.time.{DateTime, Duration}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json._
 import play.api.mvc.Cookie
-
-import scala.util.Try
+import java.time._
 
 object CookieBuilder {
-  def fromGuestConversion(json: JsValue, domain: Option[String] = None): Option[Seq[Cookie]] = {
+  def fromGuestConversion(json: JsValue, domain: Option[String] = None): JsResult[Seq[Cookie]] = {
     def cookieRead(maxAge: Int): Reads[Cookie] = (
       (JsPath \ "key").read[String] and
         (JsPath \ "value").read[String] and
@@ -20,10 +18,9 @@ object CookieBuilder {
       }
 
     for {
-      expirationString <- (json \ "cookies" \ "expiresAt").asOpt[String]
-      expiration <- Try { new DateTime(expirationString) }.toOption
-      maxAge = new Duration(DateTime.now, expiration).getStandardSeconds.toInt
-      cookies <- (json \ "cookies" \ "values").asOpt(Reads.seq[Cookie](cookieRead(maxAge)))
+      expiration <- (json \ "cookies" \ "expiresAt").validate[ZonedDateTime]
+      maxAge = Duration.between(Instant.now(), expiration).getSeconds.toInt
+      cookies <- (json \ "cookies" \ "values").validate(Reads.seq[Cookie](cookieRead(maxAge)))
     } yield cookies
   }
 }

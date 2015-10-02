@@ -4,7 +4,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, Duration}
 import org.scalactic.Tolerance._
 import org.scalatest.FreeSpec
-import play.api.libs.json.Json
+import play.api.libs.json.{JsSuccess, Json}
 
 class CookieBuilderTest extends FreeSpec {
   "After registering a guest user" - {
@@ -42,7 +42,7 @@ class CookieBuilderTest extends FreeSpec {
 
       val domain = Some("domain")
       val idCookies = CookieBuilder.fromGuestConversion(json, domain)
-      val Some(Seq(guuCookie, scgulaCookie, scguuCookie)) = idCookies
+      val JsSuccess(Seq(guuCookie, scgulaCookie, scguuCookie), _) = idCookies
 
       assert(guuCookie.name === "GU_U")
       assert(guuCookie.value === "gu_u_value")
