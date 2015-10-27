@@ -5,7 +5,7 @@ name := "identity-play-auth"
 
 organization := "com.gu.identity"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 crossScalaVersions := Seq(scalaVersion.value)
 
