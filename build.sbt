@@ -18,6 +18,8 @@ description := "A small client library for Guardian Identity authentication with
 
 licenses := Seq("Apache V2" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
+updateOptions := updateOptions.value.withCachedResolution(true)
+
 resolvers += "Guardian Github Releases" at "http://guardian.github.io/maven/repo-releases"
 
 libraryDependencies ++= Seq(
