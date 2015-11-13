@@ -7,7 +7,7 @@ trait AuthenticationService {
 
   val identityKeys: IdentityKeys
 
-  val authenticatedIdUserProvider: AuthenticatedIdUser.Provider =
+  lazy val authenticatedIdUserProvider: AuthenticatedIdUser.Provider =
     AccessCredentials.Cookies.authProvider(identityKeys)
 
   def authenticatedUserFor[A](request: RequestHeader) = authenticatedIdUserProvider(request)
