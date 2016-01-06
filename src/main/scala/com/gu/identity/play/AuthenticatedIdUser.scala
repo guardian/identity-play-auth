@@ -1,12 +1,19 @@
 package com.gu.identity.play
 
+import java.time.Clock
+import java.time.Clock.systemUTC
+
 import com.github.nscala_time.time.Imports._
-import com.gu.identity.cookie.{IdentityCookieDecoder, IdentityKeys}
-import com.gu.identity.model.{CryptoAccessToken, LiftJsonConfig, User}
+import com.gu.identity.cookie.{IdentityCookieDecoder, IdentityKeys, SCUCookieData}
+import com.gu.identity.model.{CryptoAccessToken, LiftJsonConfig}
 import com.gu.identity.play.AuthenticatedIdUser.Provider
 import com.gu.identity.signing.{CollectionSigner, DsaService, StringSigner}
 import org.joda.time.DateTime
-import play.api.mvc.RequestHeader
+import play.api.Logger
+import play.api.libs.json._
+import play.api.mvc.{Cookie, RequestHeader}
+
+import scala.util.Try
 
 case class AuthenticatedIdUser(credentials: AccessCredentials, user: IdMinimalUser)
 
@@ -25,22 +32,43 @@ sealed trait AccessCredentials
 object AccessCredentials {
   case class Cookies(scGuU: String, guU: String) extends AccessCredentials {
     val forwardingHeader = "X-GU-ID-FOWARDED-SC-GU-U" -> scGuU
+
+    val cookies = Seq(
+      Cookie("SC_GU_U", scGuU),
+      Cookie("GU_U", guU)
+    )
   }
 
   object Cookies {
-    def authProvider(identityKeys: IdentityKeys): Provider = {
+    val logger = Logger(getClass)
+
+    def authProvider(identityKeys: IdentityKeys)(implicit clock: Clock = systemUTC): Provider = {
       val cookieDecoder = new IdentityCookieDecoder(identityKeys)
+      val signer = new StringSigner(new DsaService(Some(identityKeys.publicDsaKey), None))
+
+      def secureDataFrom(scGuU: Cookie): Option[SCUCookieData] = for {
+        correctlySignedString <- Try(signer.getStringForSignedString(scGuU.value)).getOrElse { logger.warn(s"Bad sig on $scGuU"); None }
+        secureCookieData <- parseScGuU(correctlySignedString) if secureCookieData.expiry > clock.millis()
+      } yield secureCookieData
 
       request => for {
         scGuU <- request.cookies.get("SC_GU_U")
         guU <- request.cookies.get("GU_U")
-        minimalSecureUser <- cookieDecoder.getUserDataForScGuU(scGuU.value)
+        secureCookieData <- secureDataFrom(scGuU)
         guUCookieData <- cookieDecoder.getUserDataForGuU(guU.value)
-        user = guUCookieData.user if user.id == minimalSecureUser.id
+        user = guUCookieData.user if user.id == secureCookieData.id
       } yield AuthenticatedIdUser(
         AccessCredentials.Cookies(scGuU.value, guU.value),
         IdMinimalUser.from(user)
       )
+    }
+
+    def parseScGuU(correctlySignedString: String): Option[SCUCookieData] = Json.parse(correctlySignedString) match {
+      case JsArray(elements) => elements.toList match {
+        case JsString(id) :: JsNumber(expiry) :: Nil => Some(SCUCookieData(id, expiry.toLongExact))
+        case _ => None
+      }
+      case _ => None
     }
   }
 
