@@ -1,7 +1,10 @@
 package com.gu.identity.play
 
-import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, Duration}
+
+import java.time.ZoneOffset.UTC
+import java.time._
+import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
+
 import org.scalactic.Tolerance._
 import org.scalatest.FreeSpec
 import play.api.libs.json.{JsSuccess, Json}
@@ -9,11 +12,10 @@ import play.api.libs.json.{JsSuccess, Json}
 class CookieBuilderTest extends FreeSpec {
   "After registering a guest user" - {
     "The response we get can be read as identity cookies" in {
-      val now = DateTime.now
-      val inThreeMonths = now.plus(Duration.standardDays(90L))
+      val inThreeMonths = ZonedDateTime.now(UTC).plus(Duration.ofDays(90L))
 
       // 2015-12-28T15:22:01+00:00
-      val inThreeMonthsStr =ISODateTimeFormat.dateHourMinuteSecond.print(inThreeMonths) + "+00:00"
+      val inThreeMonthsStr = ISO_OFFSET_DATE_TIME.format(inThreeMonths)
 
       val json =
         Json.parse(s"""
