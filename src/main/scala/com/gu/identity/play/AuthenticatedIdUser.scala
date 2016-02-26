@@ -81,7 +81,7 @@ object AccessCredentials {
       val collectionSigner = new CollectionSigner(new StringSigner(new DsaService(identityKeys.publicDsaKey, null)), LiftJsonConfig.formats)
 
       // Adapted from https://github.com/guardian/identity/blob/8663b03/identity-api-client-lib/src/main/java/com/gu/identity/client/IdentityApiClient.java#L321-L334
-      def extractUserDataFromToken(tokenString: String): Either[String, User] with Product with Serializable = {
+      def extractUserDataFromToken(tokenString: String): Either[String, User] = {
         val cryptoAccessToken = collectionSigner.getValueForSignedString[CryptoAccessToken](tokenString)
 
         cryptoAccessToken map { cryptoToken =>
