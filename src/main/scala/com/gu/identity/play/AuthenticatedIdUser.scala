@@ -5,7 +5,7 @@ import java.time.Clock.systemUTC
 
 import com.github.nscala_time.time.Imports._
 import com.gu.identity.cookie.{IdentityCookieDecoder, IdentityKeys, SCUCookieData}
-import com.gu.identity.model.{CryptoAccessToken, LiftJsonConfig}
+import com.gu.identity.model.{User, CryptoAccessToken, LiftJsonConfig}
 import com.gu.identity.play.AuthenticatedIdUser.Provider
 import com.gu.identity.signing.{CollectionSigner, DsaService, StringSigner}
 import org.joda.time.DateTime
@@ -81,14 +81,16 @@ object AccessCredentials {
       val collectionSigner = new CollectionSigner(new StringSigner(new DsaService(identityKeys.publicDsaKey, null)), LiftJsonConfig.formats)
 
       // Adapted from https://github.com/guardian/identity/blob/8663b03/identity-api-client-lib/src/main/java/com/gu/identity/client/IdentityApiClient.java#L321-L334
-      def extractUserDataFromToken(tokenString: String) = {
-        val cryptoAccessToken = collectionSigner.getValueForSignedStringJava(tokenString, classOf[CryptoAccessToken])
+      def extractUserDataFromToken(tokenString: String): Either[String, User] = {
+        val cryptoAccessToken = collectionSigner.getValueForSignedString[CryptoAccessToken](tokenString)
 
-        if (cryptoAccessToken.expiryTime < DateTime.now) {
-          Left(s"Token: $tokenString has expired")
-        } else if (cryptoAccessToken.targetClient != targetClientId) {
-          Left(s"Token: $tokenString was not targeted for the client '$targetClientId'")
-        } else Right(cryptoAccessToken.getUser)
+        cryptoAccessToken map { cryptoToken =>
+          if (cryptoToken.expiryTime < DateTime.now) {
+            Left(s"Token: $tokenString has expired")
+          } else if (cryptoToken.targetClient != targetClientId) {
+            Left(s"Token: $tokenString was not targeted for the client '$targetClientId'")
+          } else Right(cryptoToken.getUser)
+        } getOrElse Left(s"Token: Missing or invalid token")
       }
 
       request => for {
