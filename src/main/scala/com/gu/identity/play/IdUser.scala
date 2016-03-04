@@ -30,9 +30,15 @@ case class PrivateFields(firstName: Option[String] = None,
                          billingAddress4: Option[String] = None,
                          billingPostcode: Option[String] = None,
                          billingCountry: Option[String] = None,
-                         socialAvatarUrl: Option[String] = None)
+                         socialAvatarUrl: Option[String] = None,
+                         telephoneNumber: Option[TelephoneNumber] = None)
+
+case class TelephoneNumber(countryCode: Option[String], localNumber: Option[String])
 
 object IdUser {
+  implicit val readsTelephoneNumber = Json.reads[TelephoneNumber]
+
+  implicit val writesTelephoneNumber = Json.writes[TelephoneNumber]
 
   implicit val readsStatusFields = Json.reads[StatusFields]
 
