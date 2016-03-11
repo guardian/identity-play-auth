@@ -6,6 +6,7 @@ import java.time.Clock.systemUTC
 import com.github.nscala_time.time.Imports._
 import com.gu.identity.cookie.{IdentityCookieDecoder, IdentityKeys, SCUCookieData}
 import com.gu.identity.model.{User, CryptoAccessToken, LiftJsonConfig}
+import com.gu.identity.play.AccessCredentials.Cookies.SC_GU_U
 import com.gu.identity.play.AuthenticatedIdUser.Provider
 import com.gu.identity.signing.{CollectionSigner, DsaService, StringSigner}
 import org.joda.time.DateTime
@@ -23,28 +24,45 @@ object AuthenticatedIdUser {
   type Provider = RequestHeader => Option[AuthenticatedIdUser]
 
   def provider(providers: Provider*) = {
-    r : RequestHeader => providers.flatMap(_(r)).headOption
+    r : RequestHeader =>
+      val users = providers.flatMap(_ (r)) // may be differing users!
+
+      for {
+        principal <- users.headOption if users.forall(_.id == principal.id) // reject ambiguity of different users!
+      } yield {
+        val displayNameOpt = users.flatMap(_.displayName).headOption
+        principal.copy(user = principal.user.copy(displayName = displayNameOpt))
+      }
   }
 }
 
 sealed trait AccessCredentials
 
 object AccessCredentials {
-  case class Cookies(scGuU: String, guU: String) extends AccessCredentials {
+  case class Cookies(scGuU: String) extends AccessCredentials {
     val forwardingHeader = "X-GU-ID-FOWARDED-SC-GU-U" -> scGuU
 
     val cookies = Seq(
-      Cookie("SC_GU_U", scGuU),
-      Cookie("GU_U", guU)
+      Cookie(SC_GU_U, scGuU)
     )
   }
 
   object Cookies {
+    val GU_U = "GU_U"
+    val SC_GU_U = "SC_GU_U"
+
     val logger = Logger(getClass)
 
     def authProvider(identityKeys: IdentityKeys)(implicit clock: Clock = systemUTC): Provider = {
       val cookieDecoder = new IdentityCookieDecoder(identityKeys)
       val signer = new StringSigner(new DsaService(Some(identityKeys.publicDsaKey), None))
+
+      def displayNameFrom(request: RequestHeader, id: String): Option[String] = for {
+        guU <- request.cookies.get(GU_U)
+        guUCookieData <- cookieDecoder.getUserDataForGuU(guU.value)
+        user = guUCookieData.user if user.id == id
+        displayName <- user.publicFields.displayName
+      } yield displayName
 
       def secureDataFrom(scGuU: Cookie): Option[SCUCookieData] = for {
         correctlySignedString <- Try(signer.getStringForSignedString(scGuU.value)).getOrElse { logger.warn(s"Bad sig on $scGuU"); None }
@@ -52,14 +70,11 @@ object AccessCredentials {
       } yield secureCookieData
 
       request => for {
-        scGuU <- request.cookies.get("SC_GU_U")
-        guU <- request.cookies.get("GU_U")
+        scGuU <- request.cookies.get(SC_GU_U)
         secureCookieData <- secureDataFrom(scGuU)
-        guUCookieData <- cookieDecoder.getUserDataForGuU(guU.value)
-        user = guUCookieData.user if user.id == secureCookieData.id
       } yield AuthenticatedIdUser(
-        AccessCredentials.Cookies(scGuU.value, guU.value),
-        IdMinimalUser.from(user)
+        AccessCredentials.Cookies(scGuU.value),
+        IdMinimalUser(secureCookieData.id, displayNameFrom(request, secureCookieData.id))
       )
     }
 
@@ -75,7 +90,9 @@ object AccessCredentials {
   case class Token(tokenText: String) extends AccessCredentials
 
   object Token {
-    /** @param targetClientId Not confidential, eg "members-data-api" https://github.com/guardian/identity-token-auth-sample/blob/e640832d/main.scala#L28
+    val Header = "GU-IdentityToken"
+
+    /** @param targetClientId Not confidential, eg "membership" https://github.com/guardian/identity-token-auth-sample/blob/e640832d/main.scala#L28
       */
     def authProvider(identityKeys: IdentityKeys, targetClientId: String): Provider = {
       val collectionSigner = new CollectionSigner(new StringSigner(new DsaService(identityKeys.publicDsaKey, null)), LiftJsonConfig.formats)
@@ -94,7 +111,7 @@ object AccessCredentials {
       }
 
       request => for {
-        tokenText <- request.headers.get("GU-IdentityToken")
+        tokenText <- request.headers.get(Token.Header)
         user <- extractUserDataFromToken(tokenText).right.toOption
       } yield AuthenticatedIdUser(
         AccessCredentials.Token(tokenText),
