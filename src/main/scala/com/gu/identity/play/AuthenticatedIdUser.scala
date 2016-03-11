@@ -58,7 +58,7 @@ object AccessCredentials {
       val signer = new StringSigner(new DsaService(Some(identityKeys.publicDsaKey), None))
 
       def displayNameFrom(request: RequestHeader, id: String): Option[String] = for {
-        guU <- request.cookies.get("GU_U")
+        guU <- request.cookies.get(GU_U)
         guUCookieData <- cookieDecoder.getUserDataForGuU(guU.value)
         user = guUCookieData.user if user.id == id
         displayName <- user.publicFields.displayName
