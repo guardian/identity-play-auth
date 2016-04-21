@@ -6,6 +6,7 @@ import java.time.Clock.systemUTC
 import com.github.nscala_time.time.Imports._
 import com.gu.identity.cookie.{IdentityCookieDecoder, IdentityKeys, SCUCookieData}
 import com.gu.identity.model.{User, CryptoAccessToken, LiftJsonConfig}
+import com.gu.identity.play.AccessCredentials.{Token, Cookies}
 import com.gu.identity.play.AccessCredentials.Cookies.SC_GU_U
 import com.gu.identity.play.AuthenticatedIdUser.Provider
 import com.gu.identity.signing.{CollectionSigner, DsaService, StringSigner}
@@ -14,12 +15,18 @@ import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.{Cookie, RequestHeader}
 
+import scala.language.implicitConversions
 import scala.util.Try
 
-case class AuthenticatedIdUser(credentials: AccessCredentials, user: IdMinimalUser)
+case class AuthenticatedIdUser(credentials: AccessCredentials, user: IdMinimalUser) {
+
+  def setDisplayName(displayNameOpt: Option[String]):AuthenticatedIdUser =
+    copy(user = user.copy(displayName = displayNameOpt))
+
+}
 
 object AuthenticatedIdUser {
-  implicit def authenticatedIdUserToMinimalUser(aid: AuthenticatedIdUser) = aid.user
+  implicit def authenticatedIdUserToMinimalUser(aid: AuthenticatedIdUser): IdMinimalUser = aid.user
 
   type Provider = RequestHeader => Option[AuthenticatedIdUser]
 
@@ -29,10 +36,21 @@ object AuthenticatedIdUser {
 
       for {
         principal <- users.headOption if users.forall(_.id == principal.id) // reject ambiguity of different users!
-      } yield {
-        val displayNameOpt = users.flatMap(_.displayName).headOption
-        principal.copy(user = principal.user.copy(displayName = displayNameOpt))
+      } yield principal.setDisplayName(users.flatMap(_.displayName).headOption)
+  }
+
+  implicit class RichProvider(provider: Provider) {
+    /**
+      * @return the authenticated user, with the display name from the additionalDisplayNameProvider, so long
+      *         as the Identity Id matches
+      */
+    def withDisplayNameProvider(additionalDisplayNameProvider: Provider): Provider = { req: RequestHeader =>
+      provider(req).map { authenticatedUser =>
+        if (authenticatedUser.user.displayName.isDefined) authenticatedUser else (for {
+          u <- additionalDisplayNameProvider(req) if u.id == authenticatedUser.id
+        } yield authenticatedUser.setDisplayName(u.user.displayName)).getOrElse(authenticatedUser)
       }
+    }
   }
 }
 
