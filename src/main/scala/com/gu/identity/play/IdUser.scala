@@ -31,7 +31,9 @@ case class PrivateFields(firstName: Option[String] = None,
                          billingPostcode: Option[String] = None,
                          billingCountry: Option[String] = None,
                          socialAvatarUrl: Option[String] = None,
-                         telephoneNumber: Option[TelephoneNumber] = None)
+                         telephoneNumber: Option[TelephoneNumber] = None,
+                         title: Option[String] = None
+                        )
 
 case class TelephoneNumber(countryCode: Option[String], localNumber: Option[String])
 
