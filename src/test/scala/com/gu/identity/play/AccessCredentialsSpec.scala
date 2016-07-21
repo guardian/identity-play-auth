@@ -6,6 +6,7 @@ import java.time.{Clock, Instant}
 import com.gu.identity.cookie.{ProductionKeys, SCUCookieData}
 import com.gu.identity.play.AccessCredentials.Cookies.{GU_U, parseScGuU}
 import com.gu.identity.play.AccessCredentials.{Cookies, Token}
+import org.joda.time.DateTimeUtils
 import org.scalatestplus.play._
 import play.api.mvc.Cookie
 import play.api.test.FakeRequest
@@ -46,8 +47,10 @@ class AccessCredentialsSpec extends PlaySpec {
 
   "parsing Identity cookies" must {
 
-    def authProviderWithClockSetTo(instant: Instant) =
+    def authProviderWithClockSetTo(instant: Instant) = {
+      DateTimeUtils.setCurrentMillisFixed(instant.toEpochMilli) // necessary to handle https://github.com/guardian/identity/blob/f41ad5cc/identity-cookie/src/main/scala/com/gu/identity/cookie/GuUDecoder.scala#L25
       AccessCredentials.Cookies.authProvider(new ProductionKeys)(Clock.fixed(instant, UTC))
+    }
 
     "extract an authenticated user from an HTTP request" in {
       val authProvider = authProviderWithClockSetTo(timeBeforeExpiration)
@@ -65,9 +68,9 @@ class AccessCredentialsSpec extends PlaySpec {
 
       val authenticatedIdUser = authenticatedIdUserOpt.value
 
+      authenticatedIdUser.credentials mustBe Bob.cookieCreds
       authenticatedIdUser.user.displayName mustBe Some("BobAuthTest")
       authenticatedIdUser.user mustBe Bob.user
-      authenticatedIdUser.credentials mustBe Bob.cookieCreds
     }
 
     "report an HTTP request as unauthenticated when the current time is beyond the expiration date" in {
