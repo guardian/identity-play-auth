@@ -5,7 +5,7 @@ name := "identity-play-auth"
 
 organization := "com.gu.identity"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 crossScalaVersions := Seq(scalaVersion.value)
 
@@ -24,7 +24,6 @@ resolvers += "Guardian Github Releases" at "http://guardian.github.io/maven/repo
 
 libraryDependencies ++= Seq(
   play,
-  nscalaTime,
   identityCookie,
   identityTestUsers,
   scalaTestPlus % Test,
