@@ -74,9 +74,13 @@ object AccessCredentials {
       val cookieDecoder = new IdentityCookieDecoder(identityKeys)
       val signer = new StringSigner(new DsaService(Some(identityKeys.publicDsaKey), None))
 
-      def displayNameFrom(request: RequestHeader, id: String): Option[String] = for {
+      def guUCookieDataFor(request: RequestHeader) = for {
         guU <- request.cookies.get(GU_U)
         guUCookieData <- cookieDecoder.getUserDataForGuU(guU.value)
+      } yield guUCookieData
+
+      def displayNameFrom(request: RequestHeader, id: String): Option[String] = for {
+        guUCookieData <- guUCookieDataFor(request)
         user = guUCookieData.user if user.id == id
         displayName <- user.publicFields.displayName
       } yield displayName
@@ -89,10 +93,13 @@ object AccessCredentials {
       request => for {
         scGuU <- request.cookies.get(SC_GU_U)
         secureCookieData <- secureDataFrom(scGuU)
-      } yield AuthenticatedIdUser(
-        AccessCredentials.Cookies(scGuU.value),
-        IdMinimalUser(secureCookieData.id, displayNameFrom(request, secureCookieData.id))
-      )
+      } yield {
+        request.cookies.get(GU_U).flatMap(c => cookieDecoder.getUserDataForGuU(c.value)).fold(true)(_.user.id == secureCookieData.id)
+        AuthenticatedIdUser(
+          AccessCredentials.Cookies(scGuU.value, request.cookies.get(SC_GU_U).map(_.value)),
+          IdMinimalUser(secureCookieData.id, displayNameFrom(request, secureCookieData.id))
+        )
+      }
     }
 
     def parseScGuU(correctlySignedString: String): Option[SCUCookieData] = Json.parse(correctlySignedString) match {
