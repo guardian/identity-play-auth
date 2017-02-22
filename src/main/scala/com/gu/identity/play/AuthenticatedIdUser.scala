@@ -5,9 +5,8 @@ import java.time.Clock.systemUTC
 
 import com.github.nscala_time.time.Imports._
 import com.gu.identity.cookie.{IdentityCookieDecoder, IdentityKeys, SCUCookieData}
-import com.gu.identity.model.{User, CryptoAccessToken, LiftJsonConfig}
-import com.gu.identity.play.AccessCredentials.{Token, Cookies}
-import com.gu.identity.play.AccessCredentials.Cookies.SC_GU_U
+import com.gu.identity.model.{CryptoAccessToken, LiftJsonConfig, User}
+import com.gu.identity.play.AccessCredentials.Cookies._
 import com.gu.identity.play.AuthenticatedIdUser.Provider
 import com.gu.identity.signing.{CollectionSigner, DsaService, StringSigner}
 import org.joda.time.DateTime
@@ -57,12 +56,12 @@ object AuthenticatedIdUser {
 sealed trait AccessCredentials
 
 object AccessCredentials {
-  case class Cookies(scGuU: String) extends AccessCredentials {
+  case class Cookies(scGuU: String, guU: Option[String] = None) extends AccessCredentials {
     val forwardingHeader = "X-GU-ID-FOWARDED-SC-GU-U" -> scGuU
 
     val cookies = Seq(
       Cookie(SC_GU_U, scGuU)
-    )
+    ) ++ guU.map(c => Cookie(GU_U, c))
   }
 
   object Cookies {
