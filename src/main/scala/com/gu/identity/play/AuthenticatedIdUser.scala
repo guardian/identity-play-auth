@@ -4,7 +4,7 @@ import java.time.Clock
 import java.time.Clock.systemUTC
 
 import com.github.nscala_time.time.Imports._
-import com.gu.identity.cookie.{IdentityCookieDecoder, IdentityKeys, SCUCookieData}
+import com.gu.identity.cookie.{GuUCookieData, IdentityCookieDecoder, IdentityKeys, SCUCookieData}
 import com.gu.identity.model.{CryptoAccessToken, LiftJsonConfig, User}
 import com.gu.identity.play.AccessCredentials.Cookies._
 import com.gu.identity.play.AuthenticatedIdUser.Provider
@@ -74,16 +74,10 @@ object AccessCredentials {
       val cookieDecoder = new IdentityCookieDecoder(identityKeys)
       val signer = new StringSigner(new DsaService(Some(identityKeys.publicDsaKey), None))
 
-      def guUCookieDataFor(request: RequestHeader) = for {
+      def validGuUCookieDataFor(request: RequestHeader, id: String): Option[(Cookie, GuUCookieData)] = for {
         guU <- request.cookies.get(GU_U)
-        guUCookieData <- cookieDecoder.getUserDataForGuU(guU.value)
-      } yield guUCookieData
-
-      def displayNameFrom(request: RequestHeader, id: String): Option[String] = for {
-        guUCookieData <- guUCookieDataFor(request)
-        user = guUCookieData.user if user.id == id
-        displayName <- user.publicFields.displayName
-      } yield displayName
+        guUCookieData <- cookieDecoder.getUserDataForGuU(guU.value) if guUCookieData.user.id == id
+      } yield (guU, guUCookieData)
 
       def secureDataFrom(scGuU: Cookie): Option[SCUCookieData] = for {
         correctlySignedString <- Try(signer.getStringForSignedString(scGuU.value)).getOrElse { logger.warn(s"Bad sig on $scGuU"); None }
@@ -94,10 +88,10 @@ object AccessCredentials {
         scGuU <- request.cookies.get(SC_GU_U)
         secureCookieData <- secureDataFrom(scGuU)
       } yield {
-        request.cookies.get(GU_U).flatMap(c => cookieDecoder.getUserDataForGuU(c.value)).fold(true)(_.user.id == secureCookieData.id)
+        val validGuUOpt = validGuUCookieDataFor(request, secureCookieData.id)
         AuthenticatedIdUser(
-          AccessCredentials.Cookies(scGuU.value, request.cookies.get(SC_GU_U).map(_.value)),
-          IdMinimalUser(secureCookieData.id, displayNameFrom(request, secureCookieData.id))
+          AccessCredentials.Cookies(scGuU.value, validGuUOpt.map(_._1.value)),
+          IdMinimalUser(secureCookieData.id, validGuUOpt.flatMap(_._2.user.publicFields.displayName))
         )
       }
     }
