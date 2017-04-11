@@ -1,26 +1,35 @@
 package com.gu.identity.play
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
-import play.api.libs.json._
-import play.api.mvc.Cookie
+import java.time.Clock.systemUTC
 import java.time._
 
-object CookieBuilder {
-  def fromGuestConversion(json: JsValue, domain: Option[String] = None): JsResult[Seq[Cookie]] = {
-    def cookieRead(maxAge: Int): Reads[Cookie] = (
-      (JsPath \ "key").read[String] and
-        (JsPath \ "value").read[String] and
-        (JsPath \ "sessionCookie").readNullable[Boolean]
-      ) { (name, value, sessionCookie) =>
-        val secure = name.startsWith("SC_")
-        val maxAgeOpt = if (sessionCookie.contains(true)) None else Some(maxAge)
-        Cookie(name, value, maxAge = maxAgeOpt, secure = secure, httpOnly = secure, domain = domain)
-      }
+import com.gu.identity.model.cookies.CookieDescriptionList
+import com.gu.identity.play.CookieDescriptionJson._
+import play.api.libs.json._
+import play.api.mvc.Cookie
 
-    for {
-      expiration <- (json \ "cookies" \ "expiresAt").validate[ZonedDateTime]
-      maxAge = Duration.between(Instant.now(), expiration).getSeconds.toInt
-      cookies <- (json \ "cookies" \ "values").validate(Reads.seq[Cookie](cookieRead(maxAge)))
-    } yield cookies
+object CookieBuilder {
+
+  def cookiesFromDescription(
+    cookieDescriptionList: CookieDescriptionList,
+    domain: Option[String] = None
+  )(implicit clock: Clock = systemUTC()): Seq[Cookie] = {
+
+    val maxAge = Duration.between(clock.instant(), cookieDescriptionList.expiresAt).getSeconds.toInt
+
+    for (cookieDescription <- cookieDescriptionList.values) yield {
+      val isSecure = cookieDescription.key.startsWith("SC_")
+      val maxAgeOpt = if (cookieDescription.sessionCookie.contains(true)) None else Some(maxAge)
+      Cookie(
+        cookieDescription.key,
+        cookieDescription.value,
+        maxAge = maxAgeOpt,
+        secure = true, // as of https://github.com/guardian/identity-frontend/pull/196
+        httpOnly = isSecure, // ideallycd . this would come from the Cookie Description
+        domain = domain)
+    }
+  }
+
+  def fromGuestConversion(json: JsValue, domain: Option[String] = None): JsResult[Seq[Cookie]] = {
+    (json \ "cookies").validate[CookieDescriptionList].map(cookiesFromDescription(_, domain))
   }
 }

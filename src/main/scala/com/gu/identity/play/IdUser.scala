@@ -7,7 +7,9 @@ case class IdUser(id: String,
                   primaryEmailAddress: String,
                   publicFields: PublicFields,
                   privateFields: Option[PrivateFields],
-                  statusFields: Option[StatusFields])
+                  statusFields: Option[StatusFields]) {
+  val minimal = IdMinimalUser(id, publicFields.displayName)
+}
 
 
 case class StatusFields(receiveGnmMarketing: Option[Boolean] = None,
