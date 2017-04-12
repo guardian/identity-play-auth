@@ -49,7 +49,7 @@ class CookieBuilderTest extends FreeSpec {
       assert(guuCookie.name === "GU_U")
       assert(guuCookie.value === "gu_u_value")
       assert(guuCookie.maxAge.get === (90 * 24 * 60 * 60) +- 5)
-      assert(!guuCookie.secure)
+      assert(guuCookie.secure) // ever since theguardian.com went full HTTPS
       assert(!guuCookie.httpOnly)
       assert(guuCookie.domain === domain)
 
