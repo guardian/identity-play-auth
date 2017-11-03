@@ -22,6 +22,13 @@ updateOptions := updateOptions.value.withCachedResolution(true)
 
 resolvers += Resolver.sonatypeRepo("releases")
 
+publishTo := Some(
+  if (isSnapshot.value)
+    Opts.resolver.sonatypeSnapshots
+  else
+    Opts.resolver.sonatypeStaging
+)
+
 libraryDependencies ++= Seq(
   play,
   identityCookie,
