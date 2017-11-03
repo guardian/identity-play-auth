@@ -5,7 +5,7 @@ name := "identity-play-auth"
 
 organization := "com.gu.identity"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.11.11"
 
 crossScalaVersions := Seq(scalaVersion.value)
 
@@ -40,9 +40,9 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  ReleaseStep(action = Command.process("publishSigned", _)),
+  releaseStepCommand("publishSigned"),
   setNextVersion,
   commitNextVersion,
-  ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+  releaseStepCommand("sonatypeReleaseAll"),
   pushChanges
 )
