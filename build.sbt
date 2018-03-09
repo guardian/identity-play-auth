@@ -7,7 +7,7 @@ organization := "com.gu.identity"
 
 scalaVersion := "2.11.11"
 
-crossScalaVersions := Seq(scalaVersion.value)
+crossScalaVersions := Seq(scalaVersion.value, "2.12.4")
 
 scmInfo := Some(ScmInfo(
   url("https://github.com/guardian/identity-play-auth"),
