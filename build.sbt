@@ -39,6 +39,7 @@ libraryDependencies ++= Seq(
 
 lazy val root = project in file(".")
 
+releaseCrossBuild := true
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
   inquireVersions,
@@ -47,9 +48,9 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  releaseStepCommand("publishSigned"),
+  ReleaseStep(action = releaseStepCommand("publishSigned"), enableCrossBuild = true),
   setNextVersion,
   commitNextVersion,
-  releaseStepCommand("sonatypeReleaseAll"),
+  ReleaseStep(action = releaseStepCommand("sonatypeReleaseAll"), enableCrossBuild = true),
   pushChanges
 )
