@@ -124,7 +124,7 @@ object AccessCredentials {
             Left(s"Token: $tokenString has expired")
           } else if (cryptoToken.targetClient != targetClientId) {
             Left(s"Token: $tokenString was not targeted for the client '$targetClientId'")
-          } else Right(cryptoToken.getUser)
+          } else Right(cryptoToken.user)
         } getOrElse Left(s"Token: Missing or invalid token")
       }
 

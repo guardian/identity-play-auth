@@ -5,9 +5,7 @@ name := "identity-play-auth"
 
 organization := "com.gu.identity"
 
-scalaVersion := "2.11.11"
-
-crossScalaVersions := Seq(scalaVersion.value, "2.12.4")
+scalaVersion := "2.12.6"
 
 scmInfo := Some(ScmInfo(
   url("https://github.com/guardian/identity-play-auth"),
@@ -48,9 +46,9 @@ releaseProcess := Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  ReleaseStep(action = releaseStepCommand("publishSigned"), enableCrossBuild = true),
+  ReleaseStep(action = releaseStepCommand("publishSigned"), enableCrossBuild = false),
   setNextVersion,
   commitNextVersion,
-  ReleaseStep(action = releaseStepCommand("sonatypeReleaseAll"), enableCrossBuild = true),
+  ReleaseStep(action = releaseStepCommand("sonatypeReleaseAll"), enableCrossBuild = false),
   pushChanges
 )
