@@ -3,7 +3,8 @@ package com.gu.identity.play
 import play.api.libs.json.Json
 
 case class StatusFields(receiveGnmMarketing: Option[Boolean] = None,
-                        receive3rdPartyMarketing: Option[Boolean] = None)
+                        receive3rdPartyMarketing: Option[Boolean] = None,
+                        userEmailValidated: Option[Boolean] = None)
 
 object StatusFields {
   implicit val writesStatusFields = Json.writes[StatusFields]
