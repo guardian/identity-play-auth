@@ -7,6 +7,8 @@ import com.gu.identity.play.idapi.CookieDescriptionJson._
 import play.api.libs.json._
 import play.api.mvc.Cookie
 
+// TODO: are these utility methods really needed in this library? Consider removing.
+
 object CookieBuilder {
 
   def cookiesFromDescription(

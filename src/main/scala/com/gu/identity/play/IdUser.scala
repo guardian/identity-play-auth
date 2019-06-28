@@ -2,6 +2,8 @@ package com.gu.identity.play
 
 import play.api.libs.json.Json
 
+// TODO: check model of StatusFields in identity-model can be used instead
+// this model has different fields to fields in identity-model analog
 case class StatusFields(receiveGnmMarketing: Option[Boolean] = None,
                         receive3rdPartyMarketing: Option[Boolean] = None)
 
@@ -10,6 +12,8 @@ object StatusFields {
   implicit val readsStatusFields = Json.reads[StatusFields]
 }
 
+// TODO: check model of StatusFields in identity-model can be used instead
+// this model contains subset of fields in identity-model analog
 case class PublicFields(displayName: Option[String])
 
 object PublicFields {
@@ -17,6 +21,8 @@ object PublicFields {
   implicit val readsPublicFields = Json.reads[PublicFields]
 }
 
+// TODO: check model of TelephoneNumber in identity-model can be used instead
+// definition identical
 case class TelephoneNumber(countryCode: Option[String], localNumber: Option[String])
 
 object TelephoneNumber {
@@ -24,6 +30,8 @@ object TelephoneNumber {
   implicit val readsTelephoneNumber = Json.reads[TelephoneNumber]
 }
 
+// TODO: check model of PrivateFields in identity-model can be used instead
+// this model contains subset of fields in identity-model analog
 //this can't be a Map[String,String] as PrivateFields in Identity has other object types
 case class PrivateFields(firstName: Option[String] = None,
                          secondName: Option[String] = None,
@@ -50,7 +58,10 @@ object PrivateFields {
 }
 
 
-
+// TODO: check model of User in identity-model can be used instead
+// privateFields in identity-model analog modeled as required
+// statusFields in identity-model analog modeled as required
+// minimal not defined in identity-model analog
 case class IdUser(id: String,
   primaryEmailAddress: String,
   publicFields: PublicFields,

@@ -17,18 +17,25 @@ import play.api.mvc.{Cookie, RequestHeader}
 import scala.language.implicitConversions
 import scala.util.Try
 
+// TODO: remove IdMinimalUser case class in favour of 'flat' - fields id: String, displayName: Option[String]
 case class AuthenticatedIdUser(credentials: AccessCredentials, user: IdMinimalUser) {
 
+  // TODO: remove; no need for this functionality
   def setDisplayName(displayNameOpt: Option[String]):AuthenticatedIdUser =
     copy(user = user.copy(displayName = displayNameOpt))
 
 }
 
 object AuthenticatedIdUser {
+
+  // TODO: remove implicit conversion; adds complexity and is not necessary
   implicit def authenticatedIdUserToMinimalUser(aid: AuthenticatedIdUser): IdMinimalUser = aid.user
 
+  // TODO: remove this type alias in favour of UserAuthenticator class with method:
+  // authenticateUser(requestHeader: RequestHeader): Future[Option[AuthenticatedIdUser]]
   type Provider = RequestHeader => Option[AuthenticatedIdUser]
 
+  // TODO: remove this; not necessary
   def provider(providers: Provider*) = {
     r : RequestHeader =>
       val users = providers.flatMap(_ (r)) // may be differing users!
@@ -38,6 +45,7 @@ object AuthenticatedIdUser {
       } yield principal.setDisplayName(users.flatMap(_.displayName).headOption)
   }
 
+  // TODO: remove this; add withDisplayNameProvider() as method on UserAuthenticator (if it's actually required)
   implicit class RichProvider(provider: Provider) {
     /**
       * @return the authenticated user, with the display name from the additionalDisplayNameProvider, so long
@@ -70,6 +78,8 @@ object AccessCredentials {
 
     val logger = Logger(getClass)
 
+    // TODO: implement this in UserAuthenticator class
+    // implementation should make a call to the identity API
     def authProvider(identityKeys: IdentityKeys)(implicit clock: Clock = systemUTC): Provider = {
       val cookieDecoder = new IdentityCookieDecoder(identityKeys)
       val signer = new StringSigner(new DsaService(Some(identityKeys.publicDsaKey), None))
@@ -112,6 +122,8 @@ object AccessCredentials {
 
     /** @param targetClientId Not confidential, eg "membership" https://github.com/guardian/identity-token-auth-sample/blob/e640832d/main.scala#L28
       */
+    // TODO: implement this in UserAuthenticator class
+    // implementation should make a call to the identity API
     def authProvider(identityKeys: IdentityKeys, targetClientId: String): Provider = {
       val collectionSigner = new CollectionSigner(new StringSigner(new DsaService(identityKeys.publicDsaKey, null)), LiftJsonConfig.formats)
 

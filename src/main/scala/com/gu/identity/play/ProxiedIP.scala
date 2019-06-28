@@ -8,6 +8,8 @@ import play.api.mvc.RequestHeader
 
 import scala.util.Try
 
+// TODO: are these utility methods really needed in this library? Consider removing.
+
 object ProxiedIP {
   def getIP(request: RequestHeader): Option[InetAddress] = for {
     xFor <- request.headers.get(X_FORWARDED_FOR)

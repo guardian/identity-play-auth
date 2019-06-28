@@ -4,6 +4,9 @@ import com.gu.identity.model.cookies.{CookieDescription, CookieDescriptionList}
 import com.gu.identity.play.IdUser
 import play.api.libs.json.Json
 
+// TODO: remove this file;
+// not responsibility of identity-play-auth to provide case classes that model identity API requests / responses
+
 object CookieDescriptionJson {
 
   implicit val readsCookieDescriptionList = Json.reads[CookieDescription]

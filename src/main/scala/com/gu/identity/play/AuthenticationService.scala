@@ -3,6 +3,7 @@ package com.gu.identity.play
 import com.gu.identity.cookie.IdentityKeys
 import play.api.mvc.{Request, RequestHeader}
 
+// TODO: remove - not adding any useful functionality
 trait AuthenticationService {
 
   val identityKeys: IdentityKeys
