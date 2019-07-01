@@ -7,8 +7,8 @@ organization := "com.gu.identity"
 scalaVersion := "2.12.6"
 
 scmInfo := Some(ScmInfo(
-  url("https://github.com/guardian/identity-play-auth"),
-  "scm:git:git@github.com:guardian/identity-play-auth.git"
+  url("https://github.com/guardian/identity-auth"),
+  "scm:git:git@github.com:guardian/identity-auth.git"
 ))
 
 description := "A small client library for Guardian Identity authentication with the Play framework"
@@ -34,7 +34,6 @@ libraryDependencies ++= Seq(
   "org.scalactic" %% "scalactic" % "3.0.4" % Test
 )
 
-lazy val root = project in file(".")
 
 releaseCrossBuild := true
 releaseProcess := Seq[ReleaseStep](
