@@ -10,7 +10,7 @@ import com.gu.identity.model.User
 
 import scala.concurrent.ExecutionContext
 
-private class IdentityClient(domain: String, serverAccessToken: String)(implicit ec: ExecutionContext)
+private class IdentityClient(identityApiUri: Uri, serverAccessToken: String)(implicit ec: ExecutionContext)
   extends CirceEntityDecoder {
 
   import IdentityClient._
@@ -19,38 +19,29 @@ private class IdentityClient(domain: String, serverAccessToken: String)(implicit
 
   private def executeGetRequest[A : Decoder](headers: Headers, path: String): IO[A] =
     BlazeClientBuilder[IO](ec).resource.use { client =>
-      for {
-        uri <- IO.fromEither(Uri.fromString(s"https://$domain$path"))
-        request = Request[IO](uri = uri, headers = headers)
-        response <- client.fetch(request)(decodeResponse[A])
-      } yield response
+      val request = Request[IO](uri = identityApiUri / path, headers = headers)
+      client.fetch(request)(decodeResponse[A])
     }
 
-  // TODO: correct headers
-  private def headersForSCGUUCookie(cookie: String): Headers =
-    Headers.of(
-      Header("New-Server-Access-Token", serverAccessToken),
-      Header("SC-GU-U", cookie)
-    )
+  private def headersForCredentials(credentials: UserCredentials): Headers =
+    credentials match {
+      case UserCredentials.SCGUUCookie(value) =>
+        Headers.of(
+          Header("New-Server-Access-Token", serverAccessToken),
+          Header("SC-GU-U", value)
+        )
+      case UserCredentials.CryptoAccessToken(value) =>
+        Headers.of(
+          Header("New-Server-Access-Token", serverAccessToken),
+          Header("Crypto-Access-Token", value)
+        )
+    }
 
-  // TODO: correct headers
-  private def headersForCryptoAccessToken(token: String): Headers =
-    Headers.of(
-      Header("New-Server-Access-Token", serverAccessToken),
-      Header("Crypto-Access-Token", token)
-    )
+  def authenticateUser(credentials: UserCredentials): IO[AuthResponse] =
+    executeGetRequest[AuthResponse](headersForCredentials(credentials), path = "auth/id")
 
-  def authenticateSCGUUCookie(cookie: String): IO[AuthResponse] =
-    executeGetRequest[AuthResponse](headersForSCGUUCookie(cookie), path = "/auth/id")
-
-  def authenticateCryptoAccessToken(token: String): IO[AuthResponse] =
-    executeGetRequest[AuthResponse](headersForCryptoAccessToken(token), path = "/auth/id")
-
-  def getUserFromSCGUUCookie(cookie: String): IO[UserResponse] =
-    executeGetRequest[UserResponse](headersForSCGUUCookie(cookie), path = "/user/me")
-
-  def getUserFromCryptoAccessToken(token: String): IO[UserResponse] =
-    executeGetRequest[UserResponse](headersForCryptoAccessToken(token), path = "/user/me")
+  def getUserFromCredentials(credentials: UserCredentials): IO[UserResponse] =
+    executeGetRequest[UserResponse](headersForCredentials(credentials), path = "user/me")
 }
 
 

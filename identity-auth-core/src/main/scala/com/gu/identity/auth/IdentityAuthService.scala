@@ -2,29 +2,23 @@ package com.gu.identity.auth
 
 import cats.effect.IO
 import com.gu.identity.model.User
+import org.http4s.Uri
 
 import scala.concurrent.ExecutionContext
 
 class IdentityAuthService private (identityClient: IdentityClient) {
 
-  def authenticateSCGUUCookie(cookie: String): IO[String] =
-    identityClient.authenticateSCGUUCookie(cookie).map(_.userId)
+  def authenticateUser(credentials: UserCredentials): IO[String] =
+    identityClient.authenticateUser(credentials).map(_.userId)
 
-  def authenticateCryptoAccessToken(token: String): IO[String] =
-    identityClient.authenticateCryptoAccessToken(token).map(_.userId)
-
-  def getUserFromSCGUUCookie(cookie: String): IO[User] =
-    identityClient.getUserFromSCGUUCookie(cookie).map(_.user)
-
-  def getUserFromCryptoAccessToken(token: String): IO[User] =
-    identityClient.getUserFromCryptoAccessToken(token).map(_.user)
+  def getUserFromCredentials(credentials: UserCredentials): IO[User] =
+    identityClient.getUserFromCredentials(credentials).map(_.user)
 }
 
 object IdentityAuthService {
 
-  // TODO: validate domain (?)
-  def apply(domain: String, accessToken: String)(implicit ec: ExecutionContext): IdentityAuthService = {
-    val identityClient = new IdentityClient(domain, accessToken)
+  def apply(identityApiUri: Uri, accessToken: String)(implicit ec: ExecutionContext): IdentityAuthService = {
+    val identityClient = new IdentityClient(identityApiUri, accessToken)
     new IdentityAuthService(identityClient)
   }
 }

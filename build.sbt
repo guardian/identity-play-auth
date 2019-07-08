@@ -39,11 +39,18 @@ lazy val publishSettings = Seq(
   )
 )
 
-lazy val allSettings = baseSettings ++ publishSettings
+lazy val macroSettings = Seq(
+  libraryDependencies ++= Seq(
+    compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
+    compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+  )
+)
 
 lazy val `identity-auth-core` = project
+  .settings(baseSettings)
+  .settings(publishSettings)
+  .settings(macroSettings)
   .settings(
-    allSettings,
     name := "identity-auth-core",
     libraryDependencies ++= Seq(
       "com.gu.identity" %% "identity-model" % "3.181",
@@ -58,8 +65,10 @@ lazy val `identity-auth-core` = project
   )
 
 lazy val `identity-play-auth` = project
+  .settings(baseSettings)
+  .settings(publishSettings)
+  .settings(macroSettings)
   .settings(
-    allSettings,
     name := "identity-play-auth",
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % "2.6.7",
