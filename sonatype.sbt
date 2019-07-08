@@ -1,6 +1,6 @@
 sonatypeProfileName := "com.gu"
 
-pomExtra := (
+pomExtra :=
   <url>https://github.com/guardian/identity-auth</url>
     <developers>
       <developer>
@@ -9,6 +9,3 @@ pomExtra := (
         <url>https://github.com/rtyley</url>
       </developer>
     </developers>
-  )
-
-
