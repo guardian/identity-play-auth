@@ -5,7 +5,10 @@ import cats.syntax.either._
 import com.gu.identity.auth.{IdentityAuthService, UserCredentials}
 import com.gu.identity.auth.UserCredentials.{CryptoAccessToken, SCGUUCookie}
 import com.gu.identity.model.User
+import org.http4s.Uri
 import play.api.mvc.RequestHeader
+
+import scala.concurrent.ExecutionContext
 
 class IdentityPlayAuthService(identityAuthService: IdentityAuthService) {
 
@@ -35,5 +38,10 @@ object IdentityPlayAuthService {
         ifNone = new RuntimeException("neither SC_GU_U cookie or crypto access token set in request header")
       )
     )
+  }
+
+  def apply(identityApiUri: Uri, accessToken: String)(implicit ec: ExecutionContext): IdentityPlayAuthService = {
+    val identityAuthService = IdentityAuthService(identityApiUri, accessToken)
+    new IdentityPlayAuthService(identityAuthService)
   }
 }
