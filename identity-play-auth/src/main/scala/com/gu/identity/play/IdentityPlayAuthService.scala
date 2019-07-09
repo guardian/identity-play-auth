@@ -30,8 +30,8 @@ class IdentityPlayAuthService(identityAuthService: IdentityAuthService) {
 object IdentityPlayAuthService {
 
   private def getUserCredentialsFromRequest(request: RequestHeader): IO[UserCredentials] = {
-    val cookie = request.headers.get("SC_GU_U").map(SCGUUCookie.apply)
-    val token = request.headers.get("Token").map(CryptoAccessToken.apply)
+    val cookie = request.headers.get("SC_GU_U").map(SCGUUCookie.apply) // FIXME
+    val token = request.headers.get("Token").map(CryptoAccessToken.apply) // FIXME
     IO.fromEither(
       Either.fromOption(
         cookie.orElse(token),
